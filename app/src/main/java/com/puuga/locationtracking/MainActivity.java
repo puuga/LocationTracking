@@ -36,6 +36,7 @@ public class MainActivity extends Activity implements
 
     TextView tvStatus;
     TextView tvAccurate;
+    TextView tvFrequency;
 
     ArrayList<Location> results;
 
@@ -46,6 +47,7 @@ public class MainActivity extends Activity implements
 
         tvStatus = (TextView) findViewById(R.id.tv_status);
         tvAccurate = (TextView) findViewById(R.id.tv_accurate);
+        tvFrequency = (TextView) findViewById(R.id.tv_frequency);
 
         mLocationClient = new LocationClient(this, this, this);
     }
@@ -74,7 +76,7 @@ public class MainActivity extends Activity implements
     protected void onResume() {
         super.onResume();
 
-        mLocationClient.connect();
+        //mLocationClient.connect();
     }
 
     @Override
@@ -108,6 +110,10 @@ public class MainActivity extends Activity implements
         }
 
         tvAccurate.setText(String.valueOf(currentLocation.getAccuracy()));
+        tvFrequency.setText(String.valueOf(((double)(currentLocation.getTime()-lastLocation.getTime()))/1000));
+
+        // save
+        results.add(location);
     }
 
     @Override
@@ -153,20 +159,19 @@ public class MainActivity extends Activity implements
                     fw.append("speed");
                     fw.append('\n');
 
-                    for (int i=0; i<results.size(); i++) {
-                        Location location = results.get(i);
-                        fw.append(location.getTime()+",");
-                        fw.append(location.getLatitude()+",");
-                        fw.append(location.getLongitude()+",");
+                    for (Location location : results) {
+                        fw.append(String.valueOf(location.getTime())).append(",");
+                        fw.append(String.valueOf(location.getLatitude())).append(",");
+                        fw.append(String.valueOf(location.getLongitude())).append(",");
                         if (location.hasAccuracy()) {
-                            fw.append(location.getAccuracy()+",");
+                            fw.append(String.valueOf(location.getAccuracy())).append(",");
                         } else {
                             fw.append("-1,");
                         }
                         if (location.hasSpeed()) {
-                            fw.append(location.getSpeed()+",");
+                            fw.append(String.valueOf(location.getSpeed()));
                         } else {
-                            fw.append("0,");
+                            fw.append("0");
                         }
                         fw.append('\n');
                     }

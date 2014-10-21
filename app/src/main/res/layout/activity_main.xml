@@ -36,8 +36,25 @@
         android:layout_height="wrap_content"
         android:text="New ToggleButton"
         android:id="@+id/toggleButton"
+        android:onClick="toggleService"
+        android:layout_centerVertical="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="frequency"
+        android:id="@+id/textView3"
         android:layout_below="@+id/textView2"
         android:layout_alignParentStart="true"
-        android:onClick="toggleService" />
+        android:layout_margin="10dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="New Text"
+        android:id="@+id/tv_frequency"
+        android:layout_alignTop="@+id/textView3"
+        android:layout_toEndOf="@+id/textView3" />
 
 </RelativeLayout>
