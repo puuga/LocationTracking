@@ -1,6 +1,11 @@
 package com.puuga.locationtracking;
 
 import android.app.Activity;
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Environment;
@@ -27,7 +32,8 @@ import java.util.Date;
 public class MainActivity extends Activity implements
         GooglePlayServicesClient.ConnectionCallbacks,
         GooglePlayServicesClient.OnConnectionFailedListener,
-        LocationListener {
+        LocationListener,
+        SensorEventListener {
 
     LocationClient mLocationClient;
     LocationRequest mLocationRequest;
@@ -39,6 +45,13 @@ public class MainActivity extends Activity implements
     TextView tvFrequency;
 
     ArrayList<Location> results;
+
+    private SensorManager mSensorManager;
+    private Sensor mSensor;
+    private Sensor mLinearSensor;
+    private double[] gravity = new double[3];
+    private double[] linear_acceleration = new double[3];
+    final float alpha = 0.8f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,12 +89,15 @@ public class MainActivity extends Activity implements
     protected void onResume() {
         super.onResume();
 
+        initAndStartMotion();
         //mLocationClient.connect();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+
+        stopMotion();
 
         if (mLocationClient.isConnected()) {
             mLocationClient.removeLocationUpdates(this);
@@ -225,5 +241,62 @@ public class MainActivity extends Activity implements
 
 
         return mediaFile;
+    }
+
+    private void initAndStartMotion() {
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
+        if (mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null){
+            // Success! There's a TYPE_LINEAR_ACCELERATION.
+            Log.d("sensor", "use TYPE_LINEAR_ACCELERATION");
+            mLinearSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+        }
+        else {
+            // Failure! No TYPE_LINEAR_ACCELERATION.
+            Log.d("sensor", "use TYPE_ACCELEROMETER");
+            mLinearSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        }
+
+        mSensorManager.registerListener(this, mLinearSensor, SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    private void stopMotion() {
+        try {
+            mSensorManager.unregisterListener(this);
+        } catch (NullPointerException e) {
+            //e.printStackTrace();
+        }
+        mSensorManager = null;
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        //Log.d("onSensorChanged",sensorEvent.toString());
+
+        //Log.d("senser type", String.valueOf(sensorEvent.sensor.getType()));
+        float gX = sensorEvent.values[0];
+        float gY = sensorEvent.values[0];
+        float gZ = sensorEvent.values[0];
+        Log.d("xyz","x:"+gX+", y:"+gY+", z:"+gZ);
+        if (sensorEvent.sensor.getType() == 10) {
+            double currentCalAcc = Math.sqrt(Math.pow(gX,2) + Math.pow(gY,2) + Math.pow(gZ,2));
+            Log.d("CalAcc","CalAcc:"+currentCalAcc);
+        } else {
+            gravity[0] = alpha * gravity[0] + (1 - alpha) * gX;
+            gravity[1] = alpha * gravity[1] + (1 - alpha) * gY;
+            gravity[2] = alpha * gravity[2] + (1 - alpha) * gZ;
+
+            linear_acceleration[0] = gX - gravity[0];
+            linear_acceleration[1] = gY - gravity[1];
+            linear_acceleration[2] = gZ - gravity[2];
+
+            double currentCalAcc = Math.sqrt(Math.pow(linear_acceleration[0],2) + Math.pow(linear_acceleration[1],2) + Math.pow(linear_acceleration[2],2));
+            Log.d("CalAccMod","CalAccMod:"+currentCalAcc);
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+        Log.d("onAccuracyChanged",sensor.toString());
     }
 }
